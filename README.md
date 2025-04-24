@@ -53,3 +53,14 @@ Project is under development.
 At the moment:
 
 - Implementation of Express.js standalone server for sms/appointment confirmations handling.
+
+## Setting up a project
+
+- For the best performance, I used pnpm/vite:
+
+  > pnpm create vite@latest .
+  > [] React
+  > [] TypeScript + SWC
+
+- To run development server (SWC):
+  > pnpm dev
