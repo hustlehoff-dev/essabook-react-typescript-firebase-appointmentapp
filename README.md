@@ -36,8 +36,8 @@ Soon
 
 ## Technologies
 
-- React Native + Expo
-- TailwindCSS
+- React + Typescript + SWC
+- Styled Components
 - FirebaseAPI (Firestore, Authentication, AdminSDK)
 - TwilioAPI (SMS notifications)
 - ExpressJS backend (handling SMS notifications, reminders and booking status)
