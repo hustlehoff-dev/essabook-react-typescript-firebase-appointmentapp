@@ -37,10 +37,10 @@ Soon
 ## Technologies
 
 - **_React + Typescript + SWC_**
-- **Styled Components**
-- FirebaseAPI (Firestore, Authentication, AdminSDK)
-- TwilioAPI (SMS notifications)
-- ExpressJS backend (handling SMS notifications, reminders and booking status)
+- **_Styled Components_**
+- **_FirebaseAPI (Firestore, Authentication, AdminSDK)_**
+- **_TwilioAPI (SMS notifications)_**
+- **_ExpressJS backend (handling SMS notifications, reminders and booking status)_**
 
 Project is under development.
 
