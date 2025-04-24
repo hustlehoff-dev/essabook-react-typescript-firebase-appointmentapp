@@ -46,7 +46,7 @@ Project is under development.
 
 ### Further development
 
-- Convienient webapp with control panel/subscription info (apart from mobile app)
+- Landing page and Convienient webapp interface with control panel/subscription info (mobile app version is discontinued).
 - Marketing CRM.
 - Statistic dashboard, analyzer.
 
