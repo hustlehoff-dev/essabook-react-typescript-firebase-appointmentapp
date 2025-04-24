@@ -1,54 +1,55 @@
-# React + TypeScript + Vite
+# EssaBook - Mobile Web Appointment App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+EssaBookl is a web-based application tailored for barbershop owners to manage their client appointments efficiently.
 
-Currently, two official plugins are available:
+Initial project was here:https://github.com/hustlehoff-dev/reactnative-firebase-appointment-app
+During development and later testing, I decided to recreate the app as Web Application.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The project will offer subscription model for owners of service premises in exchange of the most convienient customer relation management system in the industry.
 
-## Expanding the ESLint configuration
+## Screenshots
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Soon
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Current Project State (updated: 25.04.2025)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**What's working:**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- User can now book/remove appointments.
+- Booked appointments appear on the app's homepage as a handy list (agenda). From there, the user can call the client with one tap.
+- After booking, the app sends an SMS to inform the client about the appointment.
+- 12 or 24 hours before the appointment, the user gets a reminder SMS that allows them to confirm or cancel the visit.
+- Each appointment starts with the "booked" status. It can later change to "confirmed" or "cancelled".
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+**What's being added:**
+
+- Blacklist: lets the user ban problematic contacts (those who cancel or no-show).
+- Phone contacts sync: integrates the app with the user's phonebook. Allows user to add new booking in no time (without need to input clients data by hand).
+
+## Key Features
+
+- Appointment booking system with date, time, and time slot selection.
+- Automated SMS notifications for appointment confirmation and reminders.
+- User authentication with Firebase Authentication.
+- Data storage using Firestore Database.
+- Decentralized server handles booking states/reminders.
+
+## Technologies
+
+- React Native + Expo
+- TailwindCSS
+- FirebaseAPI (Firestore, Authentication, AdminSDK)
+- TwilioAPI (SMS notifications)
+- ExpressJS backend (handling SMS notifications, reminders and booking status)
+
+Project is under development.
+
+### Further development
+
+- Convienient webapp with control panel/subscription info (apart from mobile app)
+- Marketing CRM.
+- Statistic dashboard, analyzer.
+
+At the moment:
+
+- Implementation of Express.js standalone server for sms/appointment confirmations handling.
