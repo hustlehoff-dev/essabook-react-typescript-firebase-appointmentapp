@@ -59,7 +59,10 @@ At the moment:
 - For the best performance, I used pnpm/vite:
 
   > pnpm create vite@latest .
-  > [] React
+
+- Pick
+
+  > [] React ->
   > [] TypeScript + SWC
 
 - To run development server (SWC):
