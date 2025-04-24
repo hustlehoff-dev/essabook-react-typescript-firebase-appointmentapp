@@ -3,6 +3,7 @@
 EssaBookl is a web-based application tailored for barbershop owners to manage their client appointments efficiently.
 
 Initial project was here:https://github.com/hustlehoff-dev/reactnative-firebase-appointment-app
+
 During development and later testing, I decided to recreate the app as Web Application.
 
 The project will offer subscription model for owners of service premises in exchange of the most convienient customer relation management system in the industry.
