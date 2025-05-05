@@ -14,7 +14,7 @@ const Index = () => {
           <LargeLogoImage src={images.logo} alt="Large Logo" />
 
           <Title>
-            Umawiaj wizyty z <Highlight>Essa Barber</Highlight>
+            Umawiaj wizyty z <Highlight>EssaBook</Highlight>
           </Title>
 
           <CustomButton

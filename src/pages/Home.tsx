@@ -1,5 +1,5 @@
 // src/pages/home/index.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import AppointmentsToday from "../components/home/AppointmentsToday";
 
@@ -14,24 +14,19 @@ const getCurrentDate = () => {
 };
 const Home = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(getCurrentDate());
-  console.log(selectedDate);
   useEffect(() => {
     setSelectedDate(getCurrentDate());
   }, []);
   return (
     <HomeWrapper>
-      <h2>{}</h2>
-      <AppointmentsToday
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-      />
+      <AppointmentsToday selectedDate={selectedDate} />
     </HomeWrapper>
   );
 };
 
 export default Home;
 const HomeWrapper = styled.div`
-  background-color: #121212;
-  height: 100vh;
-  padding: 20px;
+  //background-color:#f2f2f2;
+  height: 100%;
+  padding: 1em;
 `;

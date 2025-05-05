@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // React Router
+// screens/AuthScreen.tsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth } from "../firebase";
+import { useAuth } from "../lib/AuthProvider";
 import { images } from "../constants";
 import FormField from "../components/FormField";
 import CustomButton from "../components/CustomButton";
@@ -15,161 +17,121 @@ const Container = styled.div`
   background-color: #121212;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-`;
-
-const ScrollContainer = styled.div`
-  width: 100%;
-  justify-content: center;
-  min-height: 85vh;
   padding: 16px;
-  margin: 24px 0;
-  overflow-y: auto;
-`;
-
-const LogoSmall = styled.img`
-  width: 85px;
-  height: 85px;
 `;
 
 const Logo = styled.img`
-  width: 115px;
-  height: 115px;
+  width: 100px;
+  height: 100px;
 `;
 
 const Title = styled.h2`
-  font-size: 24px;
   color: white;
-  font-weight: 600;
-  margin-top: 24px;
+  font-size: 24px;
+  margin-top: 16px;
+  margin-bottom: 24px;
 `;
 
 const TextLink = styled.span`
   font-size: 18px;
+
   font-weight: 600;
   color: #ff8c00;
   cursor: pointer;
 `;
 
-const FormContainer = styled.div`
-  width: 100%;
+const LinkRow = styled.div`
+  margin-top: 16px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
   justify-content: center;
-  min-height: 85vh;
-  padding: 16px;
-  margin-top: 28px;
 `;
 
-const AuthScreen: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState<boolean>(false); // Używamy stanu do przełączania widoków
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+const InfoText = styled.span`
+  font-size: 18px;
+  color: #a0a0a0;
+`;
 
+interface AuthScreenProps {
+  signUpMode?: boolean;
+}
+
+const AuthScreen: React.FC<AuthScreenProps> = ({ signUpMode = false }) => {
+  const [isSignUp, setIsSignUp] = useState(signUpMode);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const signUp = async () => {
+  // Auto-redirect jeśli user już jest zalogowany
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/home");
+    }
+  }, [user, loading, navigate]);
+
+  const handleAuth = async () => {
     try {
-      const user = await createUserWithEmailAndPassword(auth, email, password);
-      if (user) navigate("/home"); // Przenosimy do strony home po udanym rejestracji
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+      } else {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      }
+      // User automatycznie się zaktualizuje przez onAuthStateChanged
     } catch (error: any) {
-      console.log(error);
-      alert("Podaj dane logowania");
+      console.error(error);
+      alert("Nieprawidłowe dane. Spróbuj ponownie.");
     }
   };
 
-  const signIn = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigate("/home");
-    } catch (error: any) {
-      console.log(error);
-      alert("Podaj dane logowania");
-    }
-  };
+  if (loading) {
+    return (
+      <div style={{ color: "white", textAlign: "center" }}>Ładowanie...</div>
+    );
+  }
 
   return (
     <Container>
-      <ScrollContainer>
-        <FormContainer>
-          <LogoSmall src={images.logoSmall} alt="Logo" />
-          <Logo src={images.logo} alt="Logo" />
-          <Title>{isSignUp ? "Rejestracja" : "Logowanie"}</Title>
+      <div style={{ width: "100%", maxWidth: 400 }}>
+        <Logo src={images.logo} alt="Logo" />
+        <Title>{isSignUp ? "Rejestracja" : "Logowanie"}</Title>
 
-          {/* Formularz logowania */}
-          {isSignUp ? (
-            <>
-              <FormField
-                title="Email"
-                value={email}
-                handleChangeText={setEmail}
-                otherStyles="marginTop: 28"
-                type="email-address"
-                placeholder=""
-              />
-              <FormField
-                title="Hasło"
-                value={password}
-                handleChangeText={setPassword}
-                otherStyles="marginTop: 28"
-                type="default"
-                placeholder=""
-              />
-              <CustomButton title="Utwórz konto" handlePress={signUp} />
-              <div
-                style={{
-                  justifyContent: "center",
-                  paddingTop: 20,
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 8,
-                }}>
-                <span style={{ fontSize: 18, color: "#A0A0A0" }}>
-                  Masz już konto?
-                </span>
-                <TextLink onClick={() => setIsSignUp(false)}>
-                  Zaloguj się
-                </TextLink>
-              </div>
-            </>
-          ) : (
-            <>
-              <FormField
-                title="Email"
-                value={email}
-                handleChangeText={setEmail}
-                otherStyles="marginTop: 28"
-                type="email-address"
-                placeholder=""
-              />
-              <FormField
-                title="Hasło"
-                value={password}
-                handleChangeText={setPassword}
-                otherStyles="marginTop: 28"
-                type="default"
-                placeholder=""
-              />
-              <CustomButton title="Zaloguj" handlePress={signIn} />
-              <div
-                style={{
-                  justifyContent: "center",
-                  paddingTop: 20,
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 8,
-                }}>
-                <span style={{ fontSize: 18, color: "#A0A0A0" }}>
-                  Nie masz konta?
-                </span>
-                <TextLink onClick={() => setIsSignUp(true)}>
-                  Utwórz konto
-                </TextLink>
-              </div>
-            </>
-          )}
-        </FormContainer>
-      </ScrollContainer>
+        <FormField
+          title="Email"
+          value={email}
+          handleChangeText={setEmail}
+          otherStyles="marginTop: 16"
+          type="default"
+          placeholder=""
+        />
+        <FormField
+          title="Hasło"
+          value={password}
+          handleChangeText={setPassword}
+          otherStyles="marginTop: 16"
+          type="default"
+          placeholder=""
+        />
+
+        <CustomButton
+          title={isSignUp ? "Utwórz konto" : "Zaloguj się"}
+          handlePress={handleAuth}
+          containerStyles="marginTop: 28"
+        />
+
+        <LinkRow>
+          <InfoText>
+            {isSignUp ? "Masz już konto?" : "Nie masz konta?"}
+          </InfoText>
+          <TextLink onClick={() => setIsSignUp(!isSignUp)}>
+            {isSignUp ? "Zaloguj się" : "Utwórz konto"}
+          </TextLink>
+        </LinkRow>
+      </div>
     </Container>
   );
 };

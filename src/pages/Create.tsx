@@ -6,7 +6,6 @@ const CreateWrapper = styled.div`
   background-color: #121212;
   height: 100%;
   padding: 1em;
-  overflow-y: auto;
 `;
 
 const Create = () => {

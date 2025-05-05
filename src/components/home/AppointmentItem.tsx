@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 const AppointmentItemWrapper = styled.div`
   padding: 16px;
-  background-color: #1e1e1e;
+  background-color: #f2f2f2;
   margin-bottom: 10px;
   border-radius: 10px;
   border: 1px solid #212121;
@@ -12,7 +12,7 @@ const AppointmentItemWrapper = styled.div`
 
 const AppointmentText = styled.p`
   font-size: 18px;
-  color: #f2f2f2;
+  color: #222;
   margin-bottom: 2px;
 `;
 

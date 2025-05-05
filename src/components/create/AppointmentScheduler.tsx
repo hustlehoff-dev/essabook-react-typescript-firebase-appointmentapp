@@ -12,6 +12,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { Appointment } from "../../lib/types"; // Typy danych
+import CustomButton from "../CustomButton";
 
 const timeslots = [
   "09:00",
@@ -150,23 +151,20 @@ const AppointmentScheduler = () => {
 
   return (
     <Container>
-      <h1>Rezerwacja wizyt</h1>
-      <CalendarWrapper>
-        <Calendar
-          onChange={handleDayClick}
-          value={selectedDate ? new Date(selectedDate) : new Date()}
-          minDate={new Date()}
-          maxDate={new Date(new Date().setDate(new Date().getDate() + 60))}
-          tileClassName={({ date, view }) => {
-            if (
-              view === "month" &&
-              weekDates[date.toISOString().split("T")[0]]
-            ) {
-              return "selected";
-            }
-          }}
-        />
-      </CalendarWrapper>
+      <h3>Umów wizytę</h3>
+
+      <Calendar
+        onChange={handleDayClick}
+        value={selectedDate ? new Date(selectedDate) : new Date()}
+        minDate={new Date()}
+        maxDate={new Date(new Date().setDate(new Date().getDate() + 60))}
+        calendarType="gregory"
+        tileClassName={({ date, view }) => {
+          if (view === "month" && weekDates[date.toISOString().split("T")[0]]) {
+            return "selected";
+          }
+        }}
+      />
 
       {selectedDate && (
         <>
@@ -194,10 +192,11 @@ const AppointmentScheduler = () => {
               value={clientPhone}
               onChange={(e) => setClientPhone(e.target.value)}
             />
-            <button
-              onClick={() => {
+            <CustomButton
+              title="Umów"
+              handlePress={() => {
                 if (!clientName || !clientPhone) {
-                  alert("Proszę wprowadzić dane klienta!");
+                  alert("Wprowadź dane klienta :)");
                 } else {
                   bookAppointment(
                     selectedDate,
@@ -207,9 +206,7 @@ const AppointmentScheduler = () => {
                     setAppointments
                   );
                 }
-              }}>
-              Zarezerwuj
-            </button>
+              }}></CustomButton>
           </InputSection>
 
           <AppointmentList>
@@ -236,32 +233,33 @@ const AppointmentScheduler = () => {
 export default AppointmentScheduler;
 
 const Container = styled.div`
-  padding: 2rem;
   background: #121212;
   color: white;
-  min-height: 100vh;
-`;
-
-const CalendarWrapper = styled.div`
-  margin-top: 1rem;
 `;
 
 const TimeslotSection = styled.div`
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
+  overflow-x: scroll;
 `;
 
 const InputSection = styled.div`
   margin-top: 1rem;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 
   input {
-    padding: 0.5rem;
     border-radius: 4px;
     border: none;
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 1.25rem;
+    background: transparent;
+    backdrop-filter: blur(4px);
+    border: 1px solid grey;
   }
 `;
 

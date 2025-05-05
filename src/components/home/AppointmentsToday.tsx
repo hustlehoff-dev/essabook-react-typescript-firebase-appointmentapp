@@ -10,8 +10,7 @@ import {
   doc,
   deleteDoc,
 } from "firebase/firestore";
-import Calendar from "react-calendar"; // react-calendar for the calendar view
-import styled from "styled-components"; // Import styled-components
+import styled from "styled-components";
 
 interface Appointment {
   id: string;
@@ -42,12 +41,19 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedAppointments: Appointment[] = [];
+      let fetchedAppointments: Appointment[] = [];
       querySnapshot.forEach((doc) => {
         fetchedAppointments.push({
           id: doc.id,
           ...doc.data(),
         } as Appointment);
+      });
+
+      // Sortuj po czasie rosnąco (najwcześniejsza godzina na górze)
+      fetchedAppointments = fetchedAppointments.sort((a, b) => {
+        const [ah, am] = a.time.split(":").map(Number);
+        const [bh, bm] = b.time.split(":").map(Number);
+        return ah * 60 + am - (bh * 60 + bm);
       });
 
       // Group appointments into sections based on appointment date
@@ -71,11 +77,14 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
       setLoading(false);
     });
 
-    // Return unsub function when component unmounts
     return () => unsubscribe();
   }, [selectedDate]);
 
-  // Handle deleting appointment
+  const handleCall = (phoneNumber: string) => {
+    window.location.href = `tel:${phoneNumber}`;
+    console.log("Calling");
+  };
+
   const handleDelete = (appointmentId: string) => {
     const appointmentRef = doc(firestore, "appointments", appointmentId);
     deleteDoc(appointmentRef)
@@ -87,7 +96,6 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
       });
   };
 
-  // Check if appointment time has passed
   const isPastAppointment = (appointment: Appointment) => {
     const now = new Date();
     const [hours, minutes] = appointment.time.split(":").map(Number);
@@ -99,30 +107,34 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
     return appointmentTime < now;
   };
 
-  const renderAgendaItem = (item: Appointment) => {
+  const renderAgendaItem = (item: Appointment, index: number) => {
     const isPast = isPastAppointment(item);
+    const isNextVisit = index === 0; // ✅ najbliższy termin
+
     return (
-      <AppointmentItem key={item.id} past={isPast}>
+      <AppointmentItem key={item.id} $past={isPast} $next={isNextVisit}>
         <ItemContent>
-          <div>
+          <ItemContentLeft>
             <ClientName>{item.clientName}</ClientName>
             <ClientPhone>{item.clientPhone}</ClientPhone>
-          </div>
-          <div style={{ textAlign: "right" }}>
+          </ItemContentLeft>
+          <ItemContentRight>
             <Status status={item.status}>{getStatusText(item.status)}</Status>
             <AppointmentTime status={item.status}>{item.time}</AppointmentTime>
-          </div>
+          </ItemContentRight>
         </ItemContent>
         <ButtonContainer>
-          <Button onClick={() => {}} disabled={isPast}>
+          <Button
+            onClick={() => {
+              handleCall(item.clientPhone);
+            }}
+            disabled={isPast}>
             Zadzwoń
           </Button>
           <Button
             onClick={() => {
               if (
-                window.confirm(
-                  `Czy na pewno chcesz usunąć wizytę dla ${item.clientName}?`
-                )
+                window.confirm(`Czy chcesz usunąć wizytę ${item.clientName}?`)
               ) {
                 handleDelete(item.id);
               }
@@ -137,45 +149,56 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
 
   return (
     <Container>
-      <Calendar
-        value={selectedDate}
-        onChange={() => {}}
-        calendarType="gregory"
-      />
-      <div style={{ marginTop: "20px" }}>
-        {loading ? (
-          <p>Ładowanie wizyt...</p>
-        ) : (
-          sections.map((section: any) => (
-            <div key={section.title}>
-              <SectionTitle>{section.title}</SectionTitle>
-              {section.data.map(renderAgendaItem)}
-            </div>
-          ))
-        )}
-      </div>
+      {loading ? (
+        <Loading>Ładowanie wizyt... :)</Loading>
+      ) : (
+        <>
+          <SectionTitle>{selectedDate.toLocaleDateString()}</SectionTitle>
+          {sections.map((section: any) => (
+            <AppointmentsWrapper key={section.title}>
+              {section.data.map((item: Appointment, index: number) =>
+                renderAgendaItem(item, index)
+              )}
+            </AppointmentsWrapper>
+          ))}
+        </>
+      )}
     </Container>
   );
 };
 
+const Loading = styled.p`
+  width: 100%;
+  height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+`;
+
 const Container = styled.div`
-  background-color: #121212;
-  padding: 10px;
   flex: 1;
 `;
 
-const SectionTitle = styled.h3`
-  color: #fff;
+const AppointmentsWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
 `;
 
-const AppointmentItem = styled.div<{ past: boolean }>`
-  padding: 16px;
-  background-color: #1e1e1e;
-  margin-bottom: 10px;
+const SectionTitle = styled.h3``;
+
+const AppointmentItem = styled.div<{ $past: boolean; $next: boolean }>`
+  padding: 8px 16px;
+  width: 100%;
+  max-width: 420px;
+  backdrop-filter: blur(12px);
   border-radius: 10px;
-  border: 1px solid #212121;
-  opacity: ${(props) => (props.past ? 0.3 : 1)};
+  border: 1px solid rgba(50, 50, 50, 0.5);
+  opacity: ${(props) => (props.$past ? 0.3 : 1)};
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: ${(props) =>
+    props.$next ? "rgba(255, 215, 0, 0.2)" : "transparent"}; // ✅ PODŚWIETLENIE
 `;
 
 const ItemContent = styled.div`
@@ -183,19 +206,35 @@ const ItemContent = styled.div`
   justify-content: space-between;
 `;
 
+const ItemContentLeft = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+`;
+const ItemContentRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  align-items: flex-end;
+`;
+
 const ClientName = styled.p`
-  font-size: 18px;
-  color: #f2f2f2;
+  font-size: 1.5em;
+  color: #777777;
+  font-weight: 600;
+  margin: 0;
 `;
 
 const ClientPhone = styled.p`
-  font-size: 18px;
-  color: #f2f2f2;
+  font-size: 1.25em;
+  color: #ff7f00;
+  margin: 0 0 0.5em 0;
 `;
 
 const Status = styled.p<{ status: string }>`
-  font-size: 18px;
+  font-size: 1.5em;
   font-weight: 600;
+  margin: 0;
   color: ${(props) =>
     props.status === "booked"
       ? "#FF7F00"
@@ -207,8 +246,9 @@ const Status = styled.p<{ status: string }>`
 `;
 
 const AppointmentTime = styled.p<{ status: string }>`
-  font-size: 18px;
+  font-size: 1.25em;
   font-weight: 600;
+  margin: 0;
   color: ${(props) =>
     props.status === "booked"
       ? "#FF7F00"

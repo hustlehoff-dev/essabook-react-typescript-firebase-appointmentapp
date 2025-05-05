@@ -7,7 +7,8 @@ const Nav = styled.nav`
   bottom: 0;
   width: 100%;
   height: 64px;
-  background: #121212;
+  background: transparent;
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -52,16 +53,16 @@ const NavigationTabs = () => {
           </TabItem>
         )}
       </NavLink>
-      {/* 
-      <NavLink to="/profile">
-        {({ isActive }) => (
-          <TabItem>
-            <TabIcon src={icons.profile} />
-            <TabText active={isActive}>Klienci</TabText>
-          </TabItem>
-        )}
-      </NavLink>
-      */}
+      {
+        <NavLink to="/profile">
+          {({ isActive }) => (
+            <TabItem>
+              <TabIcon src={icons.profile} />
+              <TabText active={isActive}>Profil</TabText>
+            </TabItem>
+          )}
+        </NavLink>
+      }
     </Nav>
   );
 };
