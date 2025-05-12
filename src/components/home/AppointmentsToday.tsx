@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../lib/AuthProvider";
 import { format } from "date-fns";
 import { firestore } from "../../firebase";
 import {
@@ -7,13 +8,14 @@ import {
   where,
   orderBy,
   onSnapshot,
-  doc,
-  deleteDoc,
 } from "firebase/firestore";
+
 import styled from "styled-components";
+import { handleDeleteAppointment, sendReminder } from "../../lib/appointments";
 
 interface Appointment {
   id: string;
+  userId: string;
   appointmentDate: string;
   clientName: string;
   clientPhone: string;
@@ -22,20 +24,30 @@ interface Appointment {
   time: string;
 }
 
-interface selDateType {
+interface appTodayProps {
   selectedDate: Date;
 }
 
-const AppointmentsToday = ({ selectedDate }: selDateType) => {
+const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
+  const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [nextUpcomingAppointmentId, setNextUpcomingAppointmentId] = useState<
+    string | null
+  >(null);
+  const [lastPastAppointment, setLastPastAppointment] =
+    useState<Appointment | null>(null);
 
+  console.log(error);
   useEffect(() => {
+    if (authLoading || !user) return;
+
     const appointmentsRef = collection(firestore, "appointments");
 
     const q = query(
       appointmentsRef,
+      where("userId", "==", user.uid),
       where("appointmentDate", "==", format(selectedDate, "yyyy-MM-dd")),
       orderBy("fullDateTime", "asc")
     );
@@ -49,67 +61,69 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
         } as Appointment);
       });
 
-      // Sortuj po czasie rosnąco (najwcześniejsza godzina na górze)
+      // Sortowanie po czasie rosnąco
       fetchedAppointments = fetchedAppointments.sort((a, b) => {
         const [ah, am] = a.time.split(":").map(Number);
         const [bh, bm] = b.time.split(":").map(Number);
         return ah * 60 + am - (bh * 60 + bm);
       });
 
-      // Group appointments into sections based on appointment date
-      const groupedAppointments: { [key: string]: Appointment[] } =
-        fetchedAppointments.reduce(
-          (acc: { [key: string]: Appointment[] }, appointment: Appointment) => {
-            const date = appointment.appointmentDate;
-            if (!acc[date]) acc[date] = [];
-            acc[date].push(appointment);
-            return acc;
-          },
-          {}
-        );
+      const now = new Date();
+      const pastAppointments: Appointment[] = [];
+      const upcomingAppointments: Appointment[] = [];
 
-      const sectionsData = Object.keys(groupedAppointments).map((date) => ({
-        title: date,
-        data: groupedAppointments[date],
-      }));
-      setSections(sectionsData);
-      setAppointments(fetchedAppointments);
+      fetchedAppointments.forEach((appointment) => {
+        const [hours, minutes] = appointment.time.split(":").map(Number);
+        const [year, month, day] = appointment.appointmentDate
+          .split("-")
+          .map(Number);
+        const appointmentTime = new Date(year, month - 1, day, hours, minutes);
+
+        if (appointmentTime < now) {
+          pastAppointments.push(appointment);
+        } else {
+          upcomingAppointments.push(appointment);
+        }
+      });
+
+      // Ostatnia przeszła
+      const lastPast =
+        pastAppointments.length > 0
+          ? pastAppointments[pastAppointments.length - 1]
+          : null;
+
+      setLastPastAppointment(lastPast);
+      setAppointments(upcomingAppointments);
+
+      const nextUpcoming = upcomingAppointments[0] || null;
+      setNextUpcomingAppointmentId(nextUpcoming?.id || null);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [selectedDate]);
+  }, [selectedDate, user]);
 
   const handleCall = (phoneNumber: string) => {
     window.location.href = `tel:${phoneNumber}`;
-    console.log("Calling");
   };
 
-  const handleDelete = (appointmentId: string) => {
-    const appointmentRef = doc(firestore, "appointments", appointmentId);
-    deleteDoc(appointmentRef)
-      .then(() => {
-        console.log("Wizyta usunięta!");
-      })
-      .catch((err) => {
-        console.error("Błąd przy usuwaniu wizyty:", err);
-      });
+  const handleReminder = async (appointmentId: string) => {
+    setError(null);
+    try {
+      await sendReminder(appointmentId);
+      alert("Przypomnienie zostało wysłane!");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Nieznany błąd");
+      }
+    }
   };
 
-  const isPastAppointment = (appointment: Appointment) => {
-    const now = new Date();
-    const [hours, minutes] = appointment.time.split(":").map(Number);
-    const [year, month, day] = appointment.appointmentDate
-      .split("-")
-      .map(Number);
-
-    const appointmentTime = new Date(year, month - 1, day, hours, minutes);
-    return appointmentTime < now;
-  };
-
-  const renderAgendaItem = (item: Appointment, index: number) => {
-    const isPast = isPastAppointment(item);
-    const isNextVisit = index === 0; // ✅ najbliższy termin
+  const renderAgendaItem = (item: Appointment, isLastPast = false) => {
+    const isPast = isLastPast ? true : false;
+    const isNextVisit = item.id === nextUpcomingAppointmentId;
 
     return (
       <AppointmentItem key={item.id} $past={isPast} $next={isNextVisit}>
@@ -123,25 +137,33 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
             <AppointmentTime status={item.status}>{item.time}</AppointmentTime>
           </ItemContentRight>
         </ItemContent>
+
         <ButtonContainer>
-          <Button
-            onClick={() => {
-              handleCall(item.clientPhone);
-            }}
-            disabled={isPast}>
-            Zadzwoń
-          </Button>
-          <Button
-            onClick={() => {
-              if (
-                window.confirm(`Czy chcesz usunąć wizytę ${item.clientName}?`)
-              ) {
-                handleDelete(item.id);
-              }
-            }}
-            disabled={isPast}>
-            Usuń
-          </Button>
+          {isLastPast ? (
+            <Button
+              disabled={false}
+              onClick={() => alert(`Umów ponownie z ${item.clientName}`)}>
+              Umów ponownie
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={() => handleCall(item.clientPhone)}
+                disabled={false}>
+                Zadzwoń
+              </Button>
+              <Button
+                onClick={() =>
+                  handleDeleteAppointment(item.clientName, item.id)
+                }
+                disabled={false}>
+                Usuń
+              </Button>
+              <Button onClick={() => handleReminder(item.id)} disabled={false}>
+                Wyślij przypomnienie
+              </Button>
+            </>
+          )}
         </ButtonContainer>
       </AppointmentItem>
     );
@@ -154,13 +176,24 @@ const AppointmentsToday = ({ selectedDate }: selDateType) => {
       ) : (
         <>
           <SectionTitle>{selectedDate.toLocaleDateString()}</SectionTitle>
-          {sections.map((section: any) => (
-            <AppointmentsWrapper key={section.title}>
-              {section.data.map((item: Appointment, index: number) =>
-                renderAgendaItem(item, index)
-              )}
-            </AppointmentsWrapper>
-          ))}
+
+          {lastPastAppointment && (
+            <>
+              <h4>Ostatnia wizyta</h4>
+              <AppointmentsWrapper>
+                {renderAgendaItem(lastPastAppointment, true)}
+              </AppointmentsWrapper>
+            </>
+          )}
+
+          {appointments.length > 0 && (
+            <>
+              <h4>Przyszłe wizyty</h4>
+              <AppointmentsWrapper>
+                {appointments.map((item) => renderAgendaItem(item))}
+              </AppointmentsWrapper>
+            </>
+          )}
         </>
       )}
     </Container>
@@ -198,7 +231,7 @@ const AppointmentItem = styled.div<{ $past: boolean; $next: boolean }>`
   opacity: ${(props) => (props.$past ? 0.3 : 1)};
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   background-color: ${(props) =>
-    props.$next ? "rgba(255, 215, 0, 0.2)" : "transparent"}; // ✅ PODŚWIETLENIE
+    props.$next ? "rgba(255, 215, 0, 0.2)" : "transparent"};
 `;
 
 const ItemContent = styled.div`
@@ -237,12 +270,12 @@ const Status = styled.p<{ status: string }>`
   margin: 0;
   color: ${(props) =>
     props.status === "booked"
-      ? "#FF7F00"
+      ? "#777"
       : props.status === "confirmed"
       ? "green"
       : props.status === "cancelled"
       ? "red"
-      : "gray"};
+      : "#777"};
 `;
 
 const AppointmentTime = styled.p<{ status: string }>`

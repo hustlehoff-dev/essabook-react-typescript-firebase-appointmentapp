@@ -1,6 +1,7 @@
-// src/components/CalendarComponent.tsx
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+
+import { CalendarProps } from "react-calendar";
 
 const CalendarComponent = ({
   selectedDate,
@@ -9,7 +10,13 @@ const CalendarComponent = ({
   selectedDate: Date;
   onDateChange: (date: Date) => void;
 }) => {
-  return <Calendar onChange={onDateChange} value={selectedDate} />;
+  const handleChange: CalendarProps["onChange"] = (value) => {
+    if (value instanceof Date) {
+      onDateChange(value);
+    }
+  };
+
+  return <Calendar onChange={handleChange} value={selectedDate} />;
 };
 
 export default CalendarComponent;

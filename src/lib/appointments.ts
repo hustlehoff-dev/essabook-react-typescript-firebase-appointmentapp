@@ -1,14 +1,15 @@
 import { firestore } from "../firebase";
 import {
   collection,
-  addDoc,
+  getDoc,
+  setDoc,
   deleteDoc,
   doc,
   getDocs,
   query,
   where,
 } from "firebase/firestore";
-import { Appointment, BookAppointmentPayload } from "./types";
+import { Appointment } from "./types";
 
 export const getWeekDates = () => {
   const today = new Date();
@@ -28,47 +29,194 @@ export const getWeekDates = () => {
   return weekDates;
 };
 
-export const fetchAppointments = async (
-  selectedDate: string
-): Promise<Appointment[]> => {
+// Fetch once
+export const fetchAppointmentsOnce = async (
+  userId: string,
+  selectedDate: string,
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
+  if (!selectedDate) {
+    setAppointments([]);
+    return;
+  }
+
+  const formattedDate = new Date(selectedDate).toISOString().split("T")[0];
+
   const q = query(
     collection(firestore, "appointments"),
-    where("appointmentDate", ">=", selectedDate)
+    where("userId", "==", userId),
+    where("appointmentDate", "==", formattedDate)
   );
+
   const querySnapshot = await getDocs(q);
-  const fetched = querySnapshot.docs.map((doc) => ({
+
+  if (querySnapshot.empty) {
+    setAppointments([]);
+    return;
+  }
+
+  const fetchedAppointments = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as Appointment[];
 
-  return fetched.filter((a) => a.appointmentDate.startsWith(selectedDate));
+  setAppointments(fetchedAppointments);
 };
 
-export const bookAppointment = async (data: BookAppointmentPayload) => {
-  const { selectedDate, selectedTime, clientName, clientPhone } = data;
-  const fullDateTime = new Date(`${selectedDate}T${selectedTime}`);
-  await addDoc(collection(firestore, "appointments"), {
-    clientName,
-    clientPhone,
-    appointmentDate: selectedDate,
-    time: selectedTime,
-    fullDateTime,
-    status: "booked",
-    createdAt: new Date().toString(),
-  });
+// Appointment booking
 
-  await fetch("https://api.essabook.pl/add-appointment", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+//// Funkcja pomocnicza - generuje unikalne ID
+const generateUniqueId = async (): Promise<string> => {
+  let uniqueId = "";
+  let exists = true;
+
+  while (exists) {
+    uniqueId = Math.random().toString(36).substring(2, 8); // np. 'k2j9qz'
+    const docRef = doc(firestore, "appointments", uniqueId);
+    const docSnap = await getDoc(docRef);
+    exists = docSnap.exists(); // true = ID już zajęte
+  }
+
+  return uniqueId;
+};
+
+export const bookAppointment = async (
+  userId: string,
+  selectedDate: string,
+  selectedTime: string,
+  clientName: string,
+  clientPhone: string,
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
+  try {
+    const appointmentRef = collection(firestore, "appointments");
+    const fullDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
+
+    // Wygeneruj unikalne, krótkie ID
+    const uniqueId = await generateUniqueId();
+
+    // Zapisz dokument z własnym ID
+    await setDoc(doc(appointmentRef, uniqueId), {
+      userId,
       clientName,
       clientPhone,
       appointmentDate: selectedDate,
       time: selectedTime,
-    }),
-  });
+      fullDateTime,
+      status: "booked",
+      createdAt: new Date().toString(),
+    });
+
+    await fetch("https://api.essabook.pl/add-appointment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientName,
+        clientPhone,
+        appointmentDate: selectedDate,
+        time: selectedTime,
+      }),
+    });
+
+    alert("Wizyta została zarezerwowana!");
+    fetchAppointmentsOnce(userId, selectedDate, setAppointments);
+  } catch (error) {
+    console.error(error);
+    alert("Wystąpił błąd podczas rezerwacji wizyty.");
+  }
 };
 
-export const deleteAppointment = async (id: string) => {
-  await deleteDoc(doc(firestore, "appointments", id));
+// Old appointment booking
+/*
+export const bookAppointment = async (
+  userId: string,
+  selectedDate: string,
+  selectedTime: string,
+  clientName: string,
+  clientPhone: string,
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
+  try {
+    const appointmentRef = collection(firestore, "appointments");
+    const fullDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
+
+    await addDoc(appointmentRef, {
+      userId,
+      clientName,
+      clientPhone,
+      appointmentDate: selectedDate,
+      time: selectedTime,
+      fullDateTime,
+      status: "booked", 
+      createdAt: new Date().toString(),
+    });
+
+    await fetch("https://api.essabook.pl/add-appointment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientName,
+        clientPhone,
+        appointmentDate: selectedDate,
+        time: selectedTime,
+      }),
+    });
+
+    alert("Wizyta została zarezerwowana!");
+    fetchAppointmentsOnce(userId, selectedDate, setAppointments);
+  } catch (error) {
+    console.error(error);
+    alert("Wystąpił błąd podczas rezerwacji wizyty.");
+  }
+};*/
+
+/*
+export const deleteAppointment = async (
+  id: string,
+  appointments: Appointment[],
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
+  try {
+    await deleteDoc(doc(firestore, "appointments", id));
+    setAppointments(appointments.filter((appt) => appt.id !== id));
+    alert("Usunięto wizytę");
+  } catch (error) {
+    console.error(error);
+    alert("Błąd przy usuwaniu wizyty.");
+  }
+};*/
+
+export const handleDeleteAppointment = async (
+  clientName: string,
+  appointmentId: string,
+  afterDelete?: () => void
+) => {
+  if (!window.confirm(`Czy na pewno chcesz usunąć wizytę ${clientName}?`)) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(firestore, "appointments", appointmentId));
+    alert("Wizyta została usunięta.");
+    if (afterDelete) afterDelete(); // np. odświeżenie lokalnego stanu, jeśli potrzebne
+  } catch (error) {
+    console.error("Błąd przy usuwaniu wizyty:", error);
+    alert("Wystąpił błąd przy usuwaniu wizyty.");
+  }
+};
+
+// Reminder send
+export const sendReminder = async (appointmentId: string): Promise<void> => {
+  try {
+    const response = await fetch(
+      `https://api.essabook.pl/send-reminder/${appointmentId}`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      throw new Error("Błąd przy wysyłaniu przypomnienia");
+    }
+  } catch (error) {
+    throw error; // błąd w komponencie, nie obsluguje go tutaj
+  }
 };

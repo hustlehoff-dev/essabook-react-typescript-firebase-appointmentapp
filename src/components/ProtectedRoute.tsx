@@ -11,7 +11,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   if (loading) return null; // Add spinner later
 
   if (!user) {
-    return <Navigate to="/sign-in" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;

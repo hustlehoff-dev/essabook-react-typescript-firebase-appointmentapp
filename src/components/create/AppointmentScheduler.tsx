@@ -1,18 +1,14 @@
+// components/AppointmentScheduler.tsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import Calendar from "react-calendar"; // Kalendarz na React Web
+import Calendar from "react-calendar";
 import { firestore } from "../../firebase";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { Appointment } from "../../lib/types"; // Typy danych
+import { Value } from "react-calendar/src/shared/types.js";
+import { deleteDoc, doc } from "firebase/firestore";
+import { Appointment } from "../../lib/types";
 import CustomButton from "../CustomButton";
+import { useAuth } from "../../lib/AuthProvider"; // <--- dodane
+import { bookAppointment, fetchAppointmentsOnce } from "../../lib/appointments";
 
 const timeslots = [
   "09:00",
@@ -35,87 +31,6 @@ const timeslots = [
   "17:30",
 ];
 
-const getWeekDates = () => {
-  const today = new Date();
-  const startOfWeek = today.getDate() - today.getDay() + 1;
-  const weekDates: {
-    [key: string]: { selected: boolean; selectedColor: string };
-  } = {};
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(today);
-    date.setDate(startOfWeek + i);
-    const dateString = date.toISOString().split("T")[0];
-    weekDates[dateString] = { selected: false, selectedColor: "orange" };
-  }
-
-  return weekDates;
-};
-
-const fetchAppointments = async (
-  selectedDate: string,
-  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
-) => {
-  const q = query(
-    collection(firestore, "appointments"),
-    where("appointmentDate", ">=", selectedDate)
-  );
-  const querySnapshot = await getDocs(q);
-  const fetchedAppointments = querySnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Appointment[];
-
-  const filteredAppointments = fetchedAppointments.filter((appt) =>
-    appt.appointmentDate.startsWith(selectedDate)
-  );
-  setAppointments(filteredAppointments);
-};
-
-const bookAppointment = async (
-  selectedDate: string,
-  selectedTime: string,
-  clientName: string,
-  clientPhone: string,
-  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
-) => {
-  try {
-    const appointmentRef = collection(firestore, "appointments");
-    const fullDateTime = new Date(`${selectedDate}T${selectedTime}`);
-
-    // Rezerwacja do Firestore
-    await addDoc(appointmentRef, {
-      clientName,
-      clientPhone,
-      appointmentDate: `${selectedDate}`,
-      time: `${selectedTime}`,
-      fullDateTime: fullDateTime,
-      status: "booked",
-      createdAt: new Date().toString(),
-    });
-
-    // Sync z backendem
-    await fetch("https://api.essabook.pl/add-appointment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        clientName,
-        clientPhone,
-        appointmentDate: `${selectedDate}`,
-        time: `${selectedTime}`,
-      }),
-    });
-
-    alert("Wizyta została zarezerwowana!");
-    fetchAppointments(selectedDate, setAppointments); // Odświeżenie wizyt
-  } catch (error) {
-    console.error(error);
-    alert("Wystąpił błąd podczas rezerwacji wizyty.");
-  }
-};
-
 const deleteAppointment = async (
   id: string,
   appointments: Appointment[],
@@ -132,22 +47,38 @@ const deleteAppointment = async (
 };
 
 const AppointmentScheduler = () => {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const weekDates = getWeekDates();
+  const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
-    if (selectedDate) {
-      fetchAppointments(selectedDate, setAppointments);
+    if (authLoading || !user) return;
+    if (user && selectedDate) {
+      fetchAppointmentsOnce(user.uid, selectedDate, setAppointments);
     }
-  }, [selectedDate]);
+  }, [selectedDate, user]);
 
-  const handleDayClick = (date: Date) => {
-    setSelectedDate(date.toISOString().split("T")[0]);
+  const handleDayClick = (value: Value) => {
+    if (value instanceof Date) {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      const day = String(value.getDate()).padStart(2, "0");
+      const formatted = `${year}-${month}-${day}`;
+      setSelectedDate(formatted);
+    }
   };
+
+  if (!user) {
+    return (
+      <div style={{ color: "white" }}>
+        Musisz być zalogowany, aby umawiać wizyty.
+      </div>
+    );
+  }
 
   return (
     <Container>
@@ -160,9 +91,14 @@ const AppointmentScheduler = () => {
         maxDate={new Date(new Date().setDate(new Date().getDate() + 60))}
         calendarType="gregory"
         tileClassName={({ date, view }) => {
-          if (view === "month" && weekDates[date.toISOString().split("T")[0]]) {
-            return "selected";
+          if (view === "month" && selectedDate) {
+            const isSameDay =
+              date.toDateString() === new Date(selectedDate).toDateString();
+            if (isSameDay) {
+              return "selected";
+            }
           }
+          return null;
         }}
       />
 
@@ -194,35 +130,59 @@ const AppointmentScheduler = () => {
             />
             <CustomButton
               title="Umów"
-              handlePress={() => {
-                if (!clientName || !clientPhone) {
-                  alert("Wprowadź dane klienta :)");
+              isData={clientName && clientPhone && selectedTime ? false : true}
+              isLoading={isBooking}
+              handlePress={async () => {
+                if (!clientName || !clientPhone || !selectedTime) {
+                  alert("Wprowadź dane klienta i wybierz godzinę.");
                 } else {
-                  bookAppointment(
-                    selectedDate,
-                    selectedTime,
-                    clientName,
-                    clientPhone,
-                    setAppointments
-                  );
+                  setIsBooking(true);
+                  try {
+                    await bookAppointment(
+                      user.uid,
+                      selectedDate,
+                      selectedTime,
+                      clientName,
+                      clientPhone,
+                      setAppointments
+                    );
+                  } catch (error) {
+                    console.error(error);
+                    alert("Wystąpił błąd przy umawianiu wizyty.");
+                  } finally {
+                    setIsBooking(false);
+                    setSelectedTime("");
+                    setClientName("");
+                    setClientPhone("");
+                  }
                 }
-              }}></CustomButton>
+              }}
+            />
           </InputSection>
 
           <AppointmentList>
-            {appointments.map((appt) => (
-              <div key={appt.id}>
-                <span>
-                  {appt.clientName} – {appt.time}
-                </span>
-                <button
-                  onClick={() =>
-                    deleteAppointment(appt.id, appointments, setAppointments)
-                  }>
-                  Usuń
-                </button>
-              </div>
-            ))}
+            {[...appointments]
+              .sort((a, b) => a.time.localeCompare(b.time))
+              .map((appt) => (
+                <div key={appt.id}>
+                  <span>
+                    {appt.clientName} – {appt.time}
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `Czy na pewno chcesz usunąć wizytę ${appt.clientName}?`
+                        )
+                      ) {
+                        return;
+                      }
+                      deleteAppointment(appt.id, appointments, setAppointments);
+                    }}>
+                    Usuń
+                  </button>
+                </div>
+              ))}
           </AppointmentList>
         </>
       )}
@@ -236,14 +196,12 @@ const Container = styled.div`
   background: #121212;
   color: white;
 `;
-
 const TimeslotSection = styled.div`
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  gap: 0.5em;
+  margin-top: 1em;
   overflow-x: scroll;
 `;
-
 const InputSection = styled.div`
   margin-top: 1rem;
   display: flex;
@@ -251,21 +209,52 @@ const InputSection = styled.div`
   gap: 0.5rem;
 
   input {
-    border-radius: 4px;
+    border-radius: 8px;
     border: none;
     width: 100%;
     text-align: center;
-    padding: 0.5rem;
-    font-size: 1.25rem;
+    padding: 0.5em;
+    font-size: 1.25em;
     background: transparent;
     backdrop-filter: blur(4px);
     border: 1px solid grey;
+    color: #f2f2f2;
   }
 `;
-
 const AppointmentList = styled.div`
-  margin-top: 2rem;
+  margin-top: 1.5em;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75em;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: relative;
+
+    span {
+      background: linear-gradient(to right, #333, transparent);
+      border-radius: 8px;
+      padding: 0.6em 1.2em;
+      font-size: 1.125em;
+      padding-right: 4.2em;
+    }
+    button {
+      font-size: 1.125em;
+      background: #333;
+      position: absolute;
+      right: 0;
+      transform: translateX(0%);
+      transition: 0.3s;
+      &:hover {
+        background: red;
+        outline: 0;
+        border: 1px solid red;
+        right: 50%;
+        transform: translateX(50%);
+      }
+    }
+  }
 `;

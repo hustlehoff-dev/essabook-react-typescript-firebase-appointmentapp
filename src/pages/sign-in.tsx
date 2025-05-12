@@ -94,22 +94,22 @@ const SignIn: React.FC = () => {
             title="Email"
             value={email}
             handleChangeText={setEmail}
-            otherStyles={{ marginTop: 28 }}
-            keyboardType="email-address"
+            otherStyles="marginTop: 28"
+            type="email-address"
             placeholder=""
           />
           <FormField
             title="Hasło"
             value={password}
             handleChangeText={setPassword}
-            otherStyles={{ marginTop: 28 }}
-            keyboardType="default"
+            otherStyles="marginTop: 28"
+            type="default"
             placeholder=""
           />
           <CustomButton
             title="Zaloguj"
             handlePress={signIn}
-            containerStyles={{ marginTop: 28 }}
+            containerStyles="marginTop: 28"
           />
           <div
             style={{

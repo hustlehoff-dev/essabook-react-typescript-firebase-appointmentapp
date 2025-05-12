@@ -21,10 +21,10 @@ const TabIcon = styled.img`
   height: 24px;
 `;
 
-const TabText = styled.span<{ active: boolean }>`
+const TabText = styled.span<{ $active: boolean }>`
   font-size: 12px;
-  color: ${({ active }) => (active ? "#FF7F00" : "#CDCDE0")};
-  font-weight: ${({ active }) => (active ? 600 : 400)};
+  color: ${({ $active }) => ($active ? "#FF7F00" : "#CDCDE0")};
+  font-weight: ${({ $active }) => ($active ? 600 : 400)};
 `;
 
 const TabItem = styled.div`
@@ -41,7 +41,7 @@ const NavigationTabs = () => {
         {({ isActive }) => (
           <TabItem>
             <TabIcon src={icons.home} />
-            <TabText active={isActive}>Wizyty</TabText>
+            <TabText $active={isActive}>Wizyty</TabText>
           </TabItem>
         )}
       </NavLink>
@@ -49,7 +49,7 @@ const NavigationTabs = () => {
         {({ isActive }) => (
           <TabItem>
             <TabIcon src={icons.plus} />
-            <TabText active={isActive}>Dodaj</TabText>
+            <TabText $active={isActive}>Dodaj</TabText>
           </TabItem>
         )}
       </NavLink>
@@ -58,7 +58,7 @@ const NavigationTabs = () => {
           {({ isActive }) => (
             <TabItem>
               <TabIcon src={icons.profile} />
-              <TabText active={isActive}>Profil</TabText>
+              <TabText $active={isActive}>Profil</TabText>
             </TabItem>
           )}
         </NavLink>
