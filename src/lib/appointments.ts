@@ -29,6 +29,11 @@ export const getWeekDates = () => {
   return weekDates;
 };
 
+const API_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "https://api.essabook.pl";
+
 // Fetch once
 export const fetchAppointmentsOnce = async (
   userId: string,
@@ -107,7 +112,7 @@ export const bookAppointment = async (
       createdAt: new Date().toString(),
     });
 
-    await fetch("https://api.essabook.pl/add-appointment", {
+    await fetch(`${API_BASE_URL}/add-appointment`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -209,7 +214,7 @@ export const handleDeleteAppointment = async (
 export const sendReminder = async (appointmentId: string): Promise<void> => {
   try {
     const response = await fetch(
-      `https://api.essabook.pl/send-reminder/${appointmentId}`,
+      `${API_BASE_URL}/send-reminder/${appointmentId}`,
       { method: "GET" }
     );
 

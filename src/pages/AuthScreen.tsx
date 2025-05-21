@@ -120,7 +120,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ signUpMode = false }) => {
         <CustomButton
           title={isSignUp ? "Utwórz konto" : "Zaloguj się"}
           handlePress={handleAuth}
-          containerStyles="marginTop: 28"
         />
 
         <LinkRow>

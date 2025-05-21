@@ -9,7 +9,6 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-
 import styled from "styled-components";
 import { handleDeleteAppointment, sendReminder } from "../../lib/appointments";
 
@@ -86,7 +85,7 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
         }
       });
 
-      // Ostatnia przeszła
+      // last past visit
       const lastPast =
         pastAppointments.length > 0
           ? pastAppointments[pastAppointments.length - 1]
@@ -107,6 +106,7 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
     window.location.href = `tel:${phoneNumber}`;
   };
 
+  // Reminder handler
   const handleReminder = async (appointmentId: string) => {
     setError(null);
     try {

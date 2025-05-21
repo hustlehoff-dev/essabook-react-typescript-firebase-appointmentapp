@@ -22,8 +22,6 @@ const Index = () => {
             handlePress={() => {
               navigate("/auth");
             }}
-            containerStyles=""
-            textStyles=""
           />
         </div>
       </ContentContainer>

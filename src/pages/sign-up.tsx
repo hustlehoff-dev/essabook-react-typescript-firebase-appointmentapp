@@ -97,11 +97,7 @@ const SignUp: React.FC = () => {
             type="default"
             placeholder=""
           />
-          <CustomButton
-            title="Utwórz konto"
-            handlePress={signUp}
-            containerStyles="marginTop: 28"
-          />
+          <CustomButton title="Utwórz konto" handlePress={signUp} />
           <div
             style={{
               justifyContent: "center",
