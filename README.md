@@ -25,7 +25,9 @@ Soon
 **What's being added:**
 
 - Blacklist: lets the user ban problematic contacts (those who cancel or no-show).
-- Phone contacts sync: integrates the app with the user's phonebook. Allows user to add new booking in no time (without need to input clients data by hand).
+- Contacts feature (obviously).
+- Appointment scheduling widget redesign (planner like).
+- Homepage clickable date (so user can check exact day visits).
 
 ## Key Features
 
