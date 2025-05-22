@@ -36,6 +36,7 @@ Soon
 - User authentication with Firebase Authentication.
 - Data storage using Firestore Database.
 - Decentralized server handles booking states/reminders.
+- User swap when both logged in.
 
 ## Technologies
 
