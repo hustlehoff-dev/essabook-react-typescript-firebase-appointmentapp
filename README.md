@@ -1,64 +1,69 @@
 # EssaBook - Mobile Web Appointment App
 
-EssaBookl is a web-based application tailored for barbershop owners to manage their client appointments efficiently.
+# EssaBook – Web Appointment Management App
 
-Initial project was here:https://github.com/hustlehoff-dev/reactnative-firebase-appointment-app
+EssaBook is a lightweight, web-based application designed for service business owners (e.g., barbers) who want to manage client appointments easily – mobile-first, intuitive, and chaos-free.
 
-During development and later testing, I decided to recreate the app as Web Application.
+The original project started as a mobile app:  
+➡️ [reactnative-firebase-appointment-app](https://github.com/hustlehoff-dev/reactnative-firebase-appointment-app)  
+During testing, the decision was made to rebuild it entirely as a web application.
 
-The project will offer subscription model for owners of service premises in exchange of the most convienient customer relation management system in the industry.
+---
 
-## Screenshots
+## 🟢 Current Project State (as of: 25.04.2025)
 
-Soon
+The app is fully functional and currently in **commercial testing** with 3 business users.
 
-## Current Project State (updated: 25.04.2025)
+### ✅ What works:
 
-**What's working:**
+- Users can **book and cancel appointments**.
+- The main screen shows a **daily agenda** with the upcoming appointment and the **most recent past visit** (rebooking with 1 click – currently being implemented).
+- After booking, the client receives an **SMS notification**.
+- At **18:00 (6 PM) the day before** the appointment, the client gets an **SMS reminder with links to confirm or cancel** (1-click – done).
+- Appointment status updates **in real-time** (booked → confirmed/cancelled).
 
-- User can now book/remove appointments.
-- Booked appointments appear on the app's homepage as a handy list (agenda). From there, the user can call the client with one tap.
-- After booking, the app sends an SMS to inform the client about the appointment.
-- 12 or 24 hours before the appointment, the user gets a reminder SMS that allows them to confirm or cancel the visit.
-- Each appointment starts with the "booked" status. It can later change to "confirmed" or "cancelled".
+### 🔧 In progress:
 
-**What's being added:**
+- **Client blacklist** (for no-shows and frequent cancellers).
+- **Contacts module** (manage clients).
+- **Appointment widget redesign** (more like a planner than a simple list).
+- **Clickable dates** in the agenda to quickly browse days.
 
-- Blacklist: lets the user ban problematic contacts (those who cancel or no-show).
-- Contacts feature (obviously).
-- Appointment scheduling widget redesign (planner like).
-- Homepage clickable date (so user can check exact day visits).
+---
 
-## Key Features
+## 🔑 Key Features
 
-- Appointment booking system with date, time, and time slot selection.
-- Automated SMS notifications for appointment confirmation and reminders.
-- User authentication with Firebase Authentication.
-- Data storage using Firestore Database.
-- Decentralized server handles booking states/reminders.
-- User swap when both logged in.
+- Appointment booking (date, time, slot).
+- Automated SMS notifications (confirmation + reminder).
+- 1-click links for client actions directly from SMS.
+- Firebase Authentication + Firestore for user/data management.
+- Separate Express.js backend for notification & status handling.
+- Multi-user account switching.
 
-## Technologies
+---
 
-- **_React + Typescript + SWC_**
-- **_Styled Components_**
-- **_FirebaseAPI (Firestore, Authentication, AdminSDK)_**
-- **_TwilioAPI (SMS notifications)_**
-- **_ExpressJS backend (handling SMS notifications, reminders and booking status)_**
+## ⚙️ Technologies
 
-Project is under development.
+- **React + TypeScript + SWC**
+- **Styled Components**
+- **Firebase (Firestore, Authentication, AdminSDK)**
+- **Twilio API (SMS notifications)**
+- **Express.js backend** (for confirmations, reminders, status updates)
 
-### Further development
+---
 
-- Landing page and Convienient webapp interface with control panel/subscription info (mobile app version is discontinued).
-- Marketing CRM.
-- Statistic dashboard, analyzer.
+## Planned Features
 
-At the moment:
+- **Landing page** + control panel (subscriptions, CRM, settings).
+- **CRM module** with marketing tools.
+- **Statistics dashboard & analytics**.
+- **Webapp-first** approach (mobile app discontinued – full PWA focus).
 
-- Implementation of Express.js standalone server for sms/appointment confirmations handling.
+Currently working on a **standalone Express.js server** for handling SMS confirmations and reminders.
 
-## Setting up a project
+---
+
+## Running the Project Locally
 
 - For the best performance, I used pnpm/vite:
 
