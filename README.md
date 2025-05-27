@@ -1,5 +1,3 @@
-# EssaBook - Mobile Web Appointment App
-
 # EssaBook – Web Appointment Management App
 
 EssaBook is a lightweight, web-based application designed for service business owners (e.g., barbers) who want to manage client appointments easily – mobile-first, intuitive, and chaos-free.
