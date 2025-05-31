@@ -9,27 +9,51 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import styled from "styled-components";
-import { handleDeleteAppointment, sendReminder } from "../../lib/appointments";
+import styled, { createGlobalStyle } from "styled-components";
+import { Appointment } from "../../lib/types";
+import {
+  bookAppointment,
+  handleDeleteAppointment,
+  sendReminder,
+} from "../../lib/appointments";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-interface Appointment {
-  id: string;
-  userId: string;
-  appointmentDate: string;
-  clientName: string;
-  clientPhone: string;
-  createdAt: string;
-  status: string;
-  time: string;
-}
+import StyledInput from "../StyledInput"; // popraw ścieżkę
+import RebookModal from "../RebookModal"; // popraw ścieżkę
 
-interface appTodayProps {
-  selectedDate: Date;
-}
+const getCurrentDate = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  if (hours >= 18) {
+    now.setDate(now.getDate() + 1);
+  }
+  return now;
+};
 
-const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
+const AppointmentsToday = () => {
   const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  const [selectedDate, setSelectedDate] = useState(getCurrentDate);
+
+  // Rebook modal state
+  const [showRebookModal, setShowRebookModal] = useState(false);
+  const [rebookDate, setRebookDate] = useState<Date | null>(new Date());
+  const [rebookTime, setRebookTime] = useState("12:00");
+  const [rebookClient, setRebookClient] = useState<Appointment | null>(null);
+
+  const handleRebookClick = (appointment: Appointment) => {
+    setRebookClient(appointment);
+    // ustaw datę i godzinę na aktualne wartości wizyty, jeśli możliwe
+    setRebookDate(
+      new Date(`${appointment.appointmentDate}T${appointment.time}:00`)
+    );
+    setRebookTime(appointment.time);
+    setShowRebookModal(true);
+  };
+  const [isBooking, setIsBooking] = useState(false);
+  console.log(isBooking);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextUpcomingAppointmentId, setNextUpcomingAppointmentId] = useState<
@@ -38,7 +62,6 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
   const [lastPastAppointment, setLastPastAppointment] =
     useState<Appointment | null>(null);
 
-  console.log(error);
   useEffect(() => {
     if (authLoading || !user) return;
 
@@ -60,7 +83,6 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
         } as Appointment);
       });
 
-      // Sortowanie po czasie rosnąco
       fetchedAppointments = fetchedAppointments.sort((a, b) => {
         const [ah, am] = a.time.split(":").map(Number);
         const [bh, bm] = b.time.split(":").map(Number);
@@ -78,14 +100,16 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
           .map(Number);
         const appointmentTime = new Date(year, month - 1, day, hours, minutes);
 
-        if (appointmentTime < now) {
+        const isToday =
+          appointment.appointmentDate === format(selectedDate, "yyyy-MM-dd");
+
+        if (appointmentTime < now && isToday) {
           pastAppointments.push(appointment);
         } else {
           upcomingAppointments.push(appointment);
         }
       });
 
-      // last past visit
       const lastPast =
         pastAppointments.length > 0
           ? pastAppointments[pastAppointments.length - 1]
@@ -101,12 +125,11 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
 
     return () => unsubscribe();
   }, [selectedDate, user]);
-
+  console.log(error);
   const handleCall = (phoneNumber: string) => {
     window.location.href = `tel:${phoneNumber}`;
   };
 
-  // Reminder handler
   const handleReminder = async (appointmentId: string) => {
     setError(null);
     try {
@@ -118,6 +141,38 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
       } else {
         setError("Nieznany błąd");
       }
+    }
+  };
+
+  // Tu powinna iść funkcja createAppointment do potwierdzenia rezerwacji
+  // Na razie prosta alert / symulacja
+  const createAppointment = async () => {
+    if (!rebookClient || !rebookDate || !rebookTime) return;
+
+    setIsBooking(true);
+    try {
+      await bookAppointment(
+        rebookClient.userId,
+        format(rebookDate, "yyyy-MM-dd"), // poprawna, nowa data
+        rebookTime, // poprawna, nowa godzina
+        rebookClient.clientName,
+        rebookClient.clientPhone,
+        setAppointments
+      );
+
+      alert(
+        `Umówiono wizytę dla ${rebookClient.clientName} na ${format(
+          rebookDate,
+          "yyyy-MM-dd"
+        )} o ${rebookTime}`
+      );
+
+      setShowRebookModal(false);
+    } catch (error) {
+      console.error(error);
+      alert("Wystąpił błąd przy umawianiu wizyty.");
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -140,9 +195,7 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
 
         <ButtonContainer>
           {isLastPast ? (
-            <Button
-              disabled={false}
-              onClick={() => alert(`Umów ponownie z ${item.clientName}`)}>
+            <Button onClick={() => handleRebookClick(item)} disabled={false}>
               Umów ponownie
             </Button>
           ) : (
@@ -175,7 +228,15 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
         <Loading>Ładowanie wizyt... :)</Loading>
       ) : (
         <>
-          <SectionTitle>{selectedDate.toLocaleDateString()}</SectionTitle>
+          <DatePickerGlobalStyle />
+          <DatePicker
+            id="date-picker"
+            selected={selectedDate}
+            onChange={(date) => date && setSelectedDate(date)}
+            dateFormat="yyyy-MM-dd"
+            withPortal
+            customInput={<StyledInput />}
+          />
 
           {lastPastAppointment && (
             <>
@@ -194,6 +255,17 @@ const AppointmentsToday = ({ selectedDate }: appTodayProps) => {
               </AppointmentsWrapper>
             </>
           )}
+
+          <RebookModal
+            visible={showRebookModal}
+            onClose={() => setShowRebookModal(false)}
+            onConfirm={createAppointment}
+            date={rebookDate}
+            time={rebookTime}
+            clientName={rebookClient?.clientName || ""}
+            onDateChange={setRebookDate}
+            onTimeChange={setRebookTime}
+          />
         </>
       )}
     </Container>
@@ -219,7 +291,40 @@ const AppointmentsWrapper = styled.div`
   gap: 1em;
 `;
 
-const SectionTitle = styled.h3``;
+const DatePickerGlobalStyle = createGlobalStyle`
+  .react-datepicker {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: 1px solid #ff7f00;
+    font-family: 'Arial', sans-serif;
+  }
+
+  .react-datepicker__header {
+    background-color: #1f1f1f;
+    border-bottom: 1px solid #ff7f00;
+  }
+
+  .react-datepicker__current-month,
+  .react-datepicker__day-name,
+  .react-datepicker__day {
+    color: #fff;
+  }
+
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    background-color: #ff7f00;
+    color: #000;
+  }
+
+  .react-datepicker__day:hover {
+    background-color: #ffa94d;
+    color: black;
+  }
+
+  .react-datepicker__navigation-icon::before {
+    border-color: #fff;
+  }
+`;
 
 const AppointmentItem = styled.div<{ $past: boolean; $next: boolean }>`
   padding: 8px 16px;
@@ -244,6 +349,7 @@ const ItemContentLeft = styled.div`
   flex-direction: column;
   gap: 0.5em;
 `;
+
 const ItemContentRight = styled.div`
   display: flex;
   flex-direction: column;
@@ -298,7 +404,7 @@ const ButtonContainer = styled.div`
   margin-top: 10px;
 `;
 
-const Button = styled.button<{ disabled: boolean }>`
+const Button = styled.button<{ disabled?: boolean }>`
   padding: 10px;
   background-color: ${(props) => (props.disabled ? "grey" : "#FF7F00")};
   color: black;

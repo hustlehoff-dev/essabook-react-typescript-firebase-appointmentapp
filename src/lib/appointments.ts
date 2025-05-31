@@ -190,6 +190,20 @@ export const deleteAppointment = async (
     alert("Błąd przy usuwaniu wizyty.");
   }
 };*/
+export const deleteAppointment = async (
+  id: string,
+  appointments: Appointment[],
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
+  try {
+    await deleteDoc(doc(firestore, "appointments", id));
+    setAppointments(appointments.filter((appt) => appt.id !== id));
+    alert("Usunięto wizytę");
+  } catch (error) {
+    console.error(error);
+    alert("Błąd przy usuwaniu wizyty.");
+  }
+};
 
 export const handleDeleteAppointment = async (
   clientName: string,

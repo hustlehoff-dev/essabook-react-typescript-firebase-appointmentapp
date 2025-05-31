@@ -1,14 +1,17 @@
 // components/AppointmentScheduler.tsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
-import { firestore } from "../../firebase";
 import { Value } from "react-calendar/src/shared/types.js";
-import { deleteDoc, doc } from "firebase/firestore";
+
 import { Appointment } from "../../lib/types";
 import CustomButton from "../CustomButton";
 import { useAuth } from "../../lib/AuthProvider"; // <--- dodane
-import { bookAppointment, fetchAppointmentsOnce } from "../../lib/appointments";
+import {
+  bookAppointment,
+  fetchAppointmentsOnce,
+  deleteAppointment,
+} from "../../lib/appointments";
 
 const timeslots = [
   "09:00",
@@ -30,21 +33,6 @@ const timeslots = [
   "17:00",
   "17:30",
 ];
-
-const deleteAppointment = async (
-  id: string,
-  appointments: Appointment[],
-  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
-) => {
-  try {
-    await deleteDoc(doc(firestore, "appointments", id));
-    setAppointments(appointments.filter((appt) => appt.id !== id));
-    alert("Usunięto wizytę");
-  } catch (error) {
-    console.error(error);
-    alert("Błąd przy usuwaniu wizyty.");
-  }
-};
 
 const AppointmentScheduler = () => {
   const { user, loading: authLoading } = useAuth();
