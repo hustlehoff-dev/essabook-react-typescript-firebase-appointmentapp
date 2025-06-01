@@ -90,7 +90,7 @@ const AppointmentCard = ({
               </Button>
             </>
           )}
-          <Button onClick={close}>X</Button>
+          {/*<Button onClick={close}>X</Button>*/}
         </ButtonContainer>
       )}
     </AppointmentItem>

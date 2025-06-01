@@ -202,7 +202,15 @@ const AppointmentsToday = () => {
             <>
               <h4>Ostatnia wizyta</h4>
               <AppointmentsWrapper>
-                {renderAgendaItem(lastPastAppointment, true)}
+                <AppointmentItem
+                  appointment={lastPastAppointment}
+                  isPast={true}
+                  isNext={false}
+                  onRebook={handleRebookClick}
+                  onCall={handleCall}
+                  onDelete={handleDeleteAppointment}
+                  onReminder={handleReminder}
+                />
               </AppointmentsWrapper>
             </>
           )}
@@ -211,7 +219,18 @@ const AppointmentsToday = () => {
             <>
               <h4>Przyszłe wizyty</h4>
               <AppointmentsWrapper>
-                {appointments.map((item) => renderAgendaItem(item))}
+                {appointments.map((item) => (
+                  <AppointmentItem
+                    key={item.id}
+                    appointment={item}
+                    isPast={false}
+                    isNext={item.id === nextUpcomingAppointmentId}
+                    onRebook={handleRebookClick}
+                    onCall={handleCall}
+                    onDelete={handleDeleteAppointment}
+                    onReminder={handleReminder}
+                  />
+                ))}
               </AppointmentsWrapper>
             </>
           )}
@@ -283,90 +302,6 @@ const DatePickerGlobalStyle = createGlobalStyle`
 
   .react-datepicker__navigation-icon::before {
     border-color: #fff;
-  }
-`;
-
-const AppointmentItem = styled.div<{
-  $past: boolean;
-  $next: boolean;
-  status: string;
-}>`
-  padding: 8px 16px;
-  width: 100%;
-  max-width: 420px;
-  backdrop-filter: blur(12px);
-  border-radius: 10px;
-  border: 1px solid rgba(50, 50, 50, 0.5);
-  opacity: ${(props) => (props.$past ? 0.3 : 1)};
-  background-color: ${(props) =>
-    statusColors[getSafeStatus(props.status)].background};
-  box-shadow: ${(props) => statusColors[getSafeStatus(props.status)].shadow};
-`;
-
-const ItemContent = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
-const ItemContentLeft = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-`;
-
-const ItemContentRight = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  align-items: flex-end;
-`;
-
-const ClientName = styled.p`
-  font-size: 1.25em;
-  color: ;
-  font-weight: 600;
-  margin: 0;
-`;
-
-const ClientPhone = styled.p`
-  font-size: 1.25em;
-  color: ;
-  font-weight: 600;
-  margin: 0 0 0.5em 0;
-`;
-
-const Status = styled.p<{ status: string }>`
-  font-size: 1.5em;
-  font-weight: 600;
-  margin: 0;
-  color: ${(props) => statusColors[getSafeStatus(props.status)].text}};
-`;
-
-const AppointmentTime = styled.p<{ status: string }>`
-  font-size: 1.5em;
-  font-weight: 600;
-  margin: 0;
-  color: ; //${(props) => statusColors[getSafeStatus(props.status)].text}};
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-`;
-
-const Button = styled.button<{ disabled?: boolean }>`
-  padding: 10px;
-  background-color: ${(props) =>
-    props.disabled ? "grey" : "rgba(205, 205, 224,.75)"};
-  color: black;
-  border-radius: 5px;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-  border: none;
-  font-size: 16px;
-
-  &:disabled {
-    background-color: grey;
   }
 `;
 
