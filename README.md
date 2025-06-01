@@ -8,24 +8,28 @@ During testing, the decision was made to rebuild it entirely as a web applicatio
 
 ---
 
-## 🟢 Current Project State (as of: 27.05.2025)
+## 🟢 Current Project State (as of: 01.06.2025)
 
 The app is fully functional and currently in **commercial testing** with 3 business users.
 
 ### ✅ What works:
 
-- Users can **book and cancel appointments**.
-- The main screen shows a **daily agenda** with the upcoming appointment and the **most recent past visit** (rebooking with 1 click – currently being implemented).
+- Users can **book and manage appointments**.
+- The main screen shows a **daily agenda** with the upcoming appointment and the **most recent past visit** (rebooking with 1 click).
 - After booking, the client receives an **SMS notification**.
-- At **18:00 (6 PM) the day before** the appointment, the client gets an **SMS reminder with links to confirm or cancel** (1-click – done).
+- At **18:00 (6 PM) the day before** the appointment, the client gets an **SMS reminder with links to confirm or cancel** (1-click – done: browser window opens with visdual confirmation HTML).
 - Appointment status updates **in real-time** (booked → confirmed/cancelled).
+- **Clickable dates** in the agenda to quickly browse days.
 
 ### 🔧 In progress:
 
+Urgent:
+
+- **Multi-user logged-in sessions** (adding multi-user acc switching).
+  Planned:
 - **Client blacklist** (for no-shows and frequent cancellers).
 - **Contacts module** (manage clients).
 - **Appointment widget redesign** (more like a planner than a simple list).
-- **Clickable dates** in the agenda to quickly browse days.
 
 ---
 
@@ -36,7 +40,6 @@ The app is fully functional and currently in **commercial testing** with 3 busin
 - 1-click links for client actions directly from SMS.
 - Firebase Authentication + Firestore for user/data management.
 - Separate Express.js backend for notification & status handling.
-- Multi-user account switching.
 
 ---
 
