@@ -21,6 +21,8 @@ The app is fully functional and currently in **commercial testing** with 3 busin
 - Appointment status updates **in real-time** (booked → confirmed/cancelled).
 - **Clickable dates** in the agenda to quickly browse days.
 
+  The project ensures complete data anonymity. Even the app administrator or developer cannot access users' passwords.
+
 ### 🔧 In progress:
 
 - **Multi-user logged-in sessions** (adding multi-user acc switching).
@@ -57,8 +59,6 @@ The app is fully functional and currently in **commercial testing** with 3 busin
 - **CRM module** with marketing tools.
 - **Statistics dashboard & analytics**.
 - **Webapp-first** approach (mobile app discontinued – full PWA focus).
-
-Currently working on a **standalone Express.js server** for handling SMS confirmations and reminders.
 
 ---
 
