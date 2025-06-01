@@ -46,7 +46,7 @@ The app is fully functional and currently in **commercial testing** with 3 busin
 - **React + TypeScript + SWC**
 - **Styled Components**
 - **Firebase (Firestore, Authentication, AdminSDK)**
-- **Twilio API (SMS notifications)**
+- **~~Twilio~~ SMSAPI (SMS notifications)**
 - **Express.js backend** (for confirmations, reminders, status updates)
 
 ---
