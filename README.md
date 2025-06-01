@@ -23,10 +23,8 @@ The app is fully functional and currently in **commercial testing** with 3 busin
 
 ### 🔧 In progress:
 
-Urgent:
-
 - **Multi-user logged-in sessions** (adding multi-user acc switching).
-  Planned:
+
 - **Client blacklist** (for no-shows and frequent cancellers).
 - **Contacts module** (manage clients).
 - **Appointment widget redesign** (more like a planner than a simple list).
