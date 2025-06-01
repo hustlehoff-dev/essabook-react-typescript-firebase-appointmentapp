@@ -8,6 +8,10 @@ During testing, the decision was made to rebuild it entirely as a web applicatio
 
 ---
 
+![Widok aplikacji](image.png)
+
+---
+
 ## 🟢 Current Project State (as of: 01.06.2025)
 
 The app is fully functional and currently in **commercial testing** with 3 business users.
