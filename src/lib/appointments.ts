@@ -97,6 +97,23 @@ export const bookAppointment = async (
     const appointmentRef = collection(firestore, "appointments");
     const fullDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
 
+    // Walidacja terminu
+    const duplicateQuery = query(
+      appointmentRef,
+      where("userId", "==", userId),
+      where("appointmentDate", "==", selectedDate),
+      where("time", "==", selectedTime)
+    );
+
+    const duplicateSnapshot = await getDocs(duplicateQuery);
+    if (!duplicateSnapshot.empty) {
+      alert("Termin zajęty wariacie!");
+      console.log(
+        `❌ Informacja: Wizyta ${selectedDate} o ${selectedTime} niezarejestrowana. Powód: Termin zajęty!`
+      );
+      return;
+    }
+
     // Wygeneruj unikalne, krótkie ID
     const uniqueId = await generateUniqueId();
 

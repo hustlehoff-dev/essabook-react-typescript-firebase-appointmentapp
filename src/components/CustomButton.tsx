@@ -36,7 +36,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 export default CustomButton;
 
 const Button = styled.button<{ isLoading: boolean; isData: boolean }>`
-  background-color: var(--secondary-color);
+  background-color: #cdcde0;
   border-radius: 12px;
   display: flex;
   justify-content: center;

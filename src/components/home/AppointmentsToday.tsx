@@ -19,8 +19,14 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import StyledInput from "../StyledInput"; // popraw ścieżkę
-import RebookModal from "../RebookModal"; // popraw ścieżkę
+import StyledInput from "../StyledInput";
+import RebookModal from "../RebookModal";
+import {
+  getStatusText,
+  getSafeStatus,
+  statusColors,
+} from "../../lib/AppointmentStatus";
+import AppointmentItem from "./../AppointmentItem";
 
 const getCurrentDate = () => {
   const now = new Date();
@@ -176,52 +182,6 @@ const AppointmentsToday = () => {
     }
   };
 
-  const renderAgendaItem = (item: Appointment, isLastPast = false) => {
-    const isPast = isLastPast ? true : false;
-    const isNextVisit = item.id === nextUpcomingAppointmentId;
-
-    return (
-      <AppointmentItem key={item.id} $past={isPast} $next={isNextVisit}>
-        <ItemContent>
-          <ItemContentLeft>
-            <ClientName>{item.clientName}</ClientName>
-            <ClientPhone>{item.clientPhone}</ClientPhone>
-          </ItemContentLeft>
-          <ItemContentRight>
-            <Status status={item.status}>{getStatusText(item.status)}</Status>
-            <AppointmentTime status={item.status}>{item.time}</AppointmentTime>
-          </ItemContentRight>
-        </ItemContent>
-
-        <ButtonContainer>
-          {isLastPast ? (
-            <Button onClick={() => handleRebookClick(item)} disabled={false}>
-              Umów ponownie
-            </Button>
-          ) : (
-            <>
-              <Button
-                onClick={() => handleCall(item.clientPhone)}
-                disabled={false}>
-                Zadzwoń
-              </Button>
-              <Button
-                onClick={() =>
-                  handleDeleteAppointment(item.clientName, item.id)
-                }
-                disabled={false}>
-                Usuń
-              </Button>
-              <Button onClick={() => handleReminder(item.id)} disabled={false}>
-                Wyślij przypomnienie
-              </Button>
-            </>
-          )}
-        </ButtonContainer>
-      </AppointmentItem>
-    );
-  };
-
   return (
     <Container>
       {loading ? (
@@ -326,7 +286,11 @@ const DatePickerGlobalStyle = createGlobalStyle`
   }
 `;
 
-const AppointmentItem = styled.div<{ $past: boolean; $next: boolean }>`
+const AppointmentItem = styled.div<{
+  $past: boolean;
+  $next: boolean;
+  status: string;
+}>`
   padding: 8px 16px;
   width: 100%;
   max-width: 420px;
@@ -334,9 +298,9 @@ const AppointmentItem = styled.div<{ $past: boolean; $next: boolean }>`
   border-radius: 10px;
   border: 1px solid rgba(50, 50, 50, 0.5);
   opacity: ${(props) => (props.$past ? 0.3 : 1)};
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   background-color: ${(props) =>
-    props.$next ? "rgba(255, 215, 0, 0.2)" : "transparent"};
+    statusColors[getSafeStatus(props.status)].background};
+  box-shadow: ${(props) => statusColors[getSafeStatus(props.status)].shadow};
 `;
 
 const ItemContent = styled.div`
@@ -358,15 +322,16 @@ const ItemContentRight = styled.div`
 `;
 
 const ClientName = styled.p`
-  font-size: 1.5em;
-  color: #777777;
+  font-size: 1.25em;
+  color: ;
   font-weight: 600;
   margin: 0;
 `;
 
 const ClientPhone = styled.p`
   font-size: 1.25em;
-  color: #ff7f00;
+  color: ;
+  font-weight: 600;
   margin: 0 0 0.5em 0;
 `;
 
@@ -374,28 +339,14 @@ const Status = styled.p<{ status: string }>`
   font-size: 1.5em;
   font-weight: 600;
   margin: 0;
-  color: ${(props) =>
-    props.status === "booked"
-      ? "#777"
-      : props.status === "confirmed"
-      ? "green"
-      : props.status === "cancelled"
-      ? "red"
-      : "#777"};
+  color: ${(props) => statusColors[getSafeStatus(props.status)].text}};
 `;
 
 const AppointmentTime = styled.p<{ status: string }>`
-  font-size: 1.25em;
+  font-size: 1.5em;
   font-weight: 600;
   margin: 0;
-  color: ${(props) =>
-    props.status === "booked"
-      ? "#FF7F00"
-      : props.status === "confirmed"
-      ? "green"
-      : props.status === "cancelled"
-      ? "red"
-      : "gray"};
+  color: ; //${(props) => statusColors[getSafeStatus(props.status)].text}};
 `;
 
 const ButtonContainer = styled.div`
@@ -406,7 +357,8 @@ const ButtonContainer = styled.div`
 
 const Button = styled.button<{ disabled?: boolean }>`
   padding: 10px;
-  background-color: ${(props) => (props.disabled ? "grey" : "#FF7F00")};
+  background-color: ${(props) =>
+    props.disabled ? "grey" : "rgba(205, 205, 224,.75)"};
   color: black;
   border-radius: 5px;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
@@ -417,18 +369,5 @@ const Button = styled.button<{ disabled?: boolean }>`
     background-color: grey;
   }
 `;
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "booked":
-      return "Zarezerwowane";
-    case "confirmed":
-      return "Potwierdzone";
-    case "cancelled":
-      return "Anulowane";
-    default:
-      return "Nieznany status";
-  }
-};
 
 export default AppointmentsToday;
