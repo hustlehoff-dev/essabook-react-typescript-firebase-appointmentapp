@@ -8,7 +8,9 @@ During testing, the decision was made to rebuild it entirely as a web applicatio
 
 ---
 
-![Widok aplikacji](image.png)
+![Apps agenda view](image.png)
+![Agenda date picker view](image-2.png)
+![App scheduler view](image-1.png)
 
 ---
 
